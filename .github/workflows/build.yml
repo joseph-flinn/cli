@@ -72,7 +72,7 @@ jobs:
           key: build-cache-${{ hashFiles('./build') }}
 
 
-  package_zips:
+  package-zips:
     name: Package Zips
     strategy:
       matrix:
@@ -106,29 +106,25 @@ jobs:
           key: dist-cache-${{ hashFiles('./dist') }}
 
 
-  package_nuget:
+  package-nuget:
     runs-on: window-latest
+    needs: build
     steps:
       - name: Cache Dist
         uses: actions/cache@v2
         with:
           path: ./dist
           key: dist-cache-${{ hashFiles('./dist') }}
-
+          
       - name: Package NuGet
         run: .\scripts\choco-pack.ps1
 
-      - name: Cache Dist
-        uses: actions/cache@v2
-        with:
-          path: ./dist
-          key: dist-cache-${{ hashFiles('./dist') }}
-
 
   # What is this testing for?
-  version_test:
+  version-test:
     name: Version Test Windows Exe
     runs-on: windows-latest
+    needs: package-zips
     steps:
       - name: Cache Dist
         uses: actions/cache@v2
@@ -144,13 +140,13 @@ jobs:
             Throw "Version test failed."
           }
 
-  publish_zips_github:
+  publish-zips-github:
     name: Publish zips to GitHub
     runs-on: windows-latest
     strategy:
       matrix:
         artifact-os: ['windows', 'macos', 'linux']
-    needs: version_test
+    needs: version-test
     steps:
       - name: Cache Dist
         uses: actions/cache@v2
@@ -171,10 +167,10 @@ jobs:
           path: ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
 
-  publish_nuget_github:
+  publish-nuget-github:
     name: Publish Nuget to GitHub
     runs-on: windows-latest
-    needs: [ package_nuget, version ]
+    needs: [ package-nuget, version-test ]
     steps:
       - name: Cache Dist
         uses: actions/cache@v2
@@ -189,7 +185,7 @@ jobs:
           path: ./dist/chocolatey/bitwarden-cli.${env:PACKAGE_VERSION}.nupkg
 
 
-  publish_windows:
+  publish-windows:
     name: Publish Windows
     runs-on: windows-latest
     needs: build
@@ -206,7 +202,7 @@ jobs:
 
 
   # This process seems independent from the others
-  publish_snap:
+  publish-snap:
     name: Publish Snap
     runs-on: ubuntu-latest
     needs: build
