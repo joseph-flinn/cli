@@ -169,6 +169,12 @@ jobs:
             Throw "Version test failed."
           }
 
+      - name: Cache Node Modules
+        uses: actions/cache@v2
+        with:
+          path: ./node-modules
+          key: node-modules-cache-${{ hashFiles('**/package-lock.json') }}
+
   publish-zips-github:
     name: Publish zips to GitHub
     runs-on: windows-latest
@@ -194,14 +200,14 @@ jobs:
       - name: Publish ${{ matrix.artifact-os }} zip
         uses: actions/upload-artifact@v2
         with:
-          name: bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip
-          path: ./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip
+          name: bw-${{ matrix.artifact-os }}-${{ env.PACKAGE_VERSION }}.zip
+          path: ./dist/bw-${{ matrix.artifact-os }}-${{ env.PACKAGE_VERSION }}.zip
 
       - name: Publish ${{ matrix.artifact-os }} checksum to GitHub
         uses: actions/upload-artifact@v2
         with:
-          name: bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
-          path: ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
+          name: bw-${{ matrix.artifact-os }}-sha256-${{ env.PACKAGE_VERSION }}.txt
+          path: ./dist/bw-${{ matrix.artifact-os }}-sha256-${{ env.PACKAGE_VERSION }}.txt
 
 
   publish-nuget-github:
