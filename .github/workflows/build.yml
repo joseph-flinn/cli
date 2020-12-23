@@ -24,18 +24,10 @@ jobs:
         run: cloc --include-lang TypeScript,JavaScript,HTML,Sass,CSS --vcs git
 
 
-  build:
-    name: Build CLI
+  setup:
+    name: Setup Package Version
     runs-on: windows-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
-
-      - name: Set up Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: '10.x'
-
       - name: Set PACKAGE_VERSION
         run: |
           $env:pkgVersion = (Get-Content -Raw -Path .\package.json | ConvertFrom-Json).version
@@ -50,6 +42,34 @@ jobs:
             Throw "test env failed."
           }
 
+
+  build:
+    name: Build CLI
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - pkg-target: win-x64
+            artifact-os: windows
+            exe: bw.exe
+          - pkg-target: macos-x64
+            artifact-os: macos
+            exe: bw
+          - pkg-target: linux-x64
+            artifact-os: linux
+            exe: bw
+    steps:
+      - name: Setup Windows builder
+        run: choco install checksum --no-progress
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
       - name: Cache Build
         uses: actions/cache@v2
         with:
@@ -61,6 +81,12 @@ jobs:
         with:
           path: ./node-modules
           key: node-modules-cache-${{ github.sha }}
+
+      - name: Cache Dist
+        uses: actions/cache@v2
+        with:
+          path: ./dist
+          key: dist-cache-${{ github.sha }}
 
       - name: Install
         run: npm install
@@ -74,54 +100,6 @@ jobs:
       - name: Clean Build
         run: npm run clean
 
-
-
-  package-zips:
-    name: Package Zips
-    strategy:
-      matrix:
-        include:
-          - pkg-target: win-x64
-            artifact-os: windows
-            exe: bw.exe
-          - pkg-target: macos-x64
-            artifact-os: macos
-            exe: bw
-          - pkg-target: linux-x64
-            artifact-os: linux
-            exe: bw
-    runs-on: windows-latest
-    needs: build
-    steps:
-      - name: Setup Windows builder
-        run: choco install checksum --no-progress
-
-      - name: Set up Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: '10.x'
-
-      - name: Checkout repo
-        uses: actions/checkout@v2
-
-      - name: Cache Node Modules
-        uses: actions/cache@v2
-        with:
-          path: ./node-modules
-          key: node-modules-cache-${{ github.sha }}
-
-      - name: Cache Build
-        uses: actions/cache@v2
-        with:
-          path: ./build
-          key: build-cache-${{ github.sha }}
-
-      - name: Cache Dist
-        uses: actions/cache@v2
-        with:
-          path: ./dist
-          key: dist-cache-${{ github.sha }}
-
       - name: Package ${{ matrix.os }}
         run: |
           npx pkg . --targets ${{ matrix.pkg-target }} --output ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
@@ -132,7 +110,7 @@ jobs:
 
   package-nuget:
     runs-on: windows-latest
-    needs: package-zips
+    needs: build
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -159,7 +137,7 @@ jobs:
   version-test:
     name: Version Test Windows Exe
     runs-on: windows-latest
-    needs: package-zips
+    needs: build
     steps:
       - name: Cache Dist
         uses: actions/cache@v2
