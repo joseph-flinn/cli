@@ -76,7 +76,14 @@ jobs:
     name: Package Zips
     strategy:
       matrix:
-        os: ['windows', 'macos', 'linux']
+        include:
+          - npm-os: win
+            artifact-os: windows
+          - npm-os: mac
+            artifact-os: macos
+          - npm-os: lin
+            artifact-os: linux
+    runs-on: windows-latest
     needs: build
     steps:
       - name: Cache Build
@@ -87,10 +94,10 @@ jobs:
 
       - name: Package ${{ matrix.os }}
         run: |
-          npm run package:${{ matrix.os }}
-          7z a ./dist/bw-${{ matrix.os }}-%PACKAGE_VERSION%.zip ./dist/${{ matrix.os }}/bw.exe
-          checksum -f="./dist/bw-${{ matrix.os }}-${env:PACKAGE_VERSION}.zip" `
-            -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.os }}-sha256-${env:PACKAGE_VERSION}.txt
+          npm run package:${{ matrix.npm-os }}
+          7z a ./dist/bw-${{ matrix.artifact-os }}-%PACKAGE_VERSION%.zip ./dist/${{ matrix.artifact-os }}/bw.exe
+          checksum -f="./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip" `
+            -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
       - name: Cache Dist
         uses: actions/cache@v2
@@ -139,9 +146,10 @@ jobs:
 
   publish_zips_github:
     name: Publish zips to GitHub
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: ['windows', 'macos', 'linux']
+        artifact-os: ['windows', 'macos', 'linux']
     needs: version_test
     steps:
       - name: Cache Dist
@@ -150,21 +158,22 @@ jobs:
           path: ./dist
           key: dist-cache-${{ hashFiles('./dist') }}
 
-      - name: Publish ${{ matrix.os }} zip
+      - name: Publish ${{ matrix.artifact-os }} zip
         uses: actions/upload-artifact@v2
         with:
-          name: bw-${{ matrix.os }}-${env:PACKAGE_VERSION}.zip
-          path: ./dist/bw-${{ matrix.os }}-${env:PACKAGE_VERSION}.zip
+          name: bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip
+          path: ./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip
 
-      - name: Publish ${{ matrix.os }} checksum to GitHub
+      - name: Publish ${{ matrix.artifact-os }} checksum to GitHub
         uses: actions/upload-artifact@v2
         with:
-          name: bw-${{ matrix.os }}-sha256-${env:PACKAGE_VERSION}.txt
-          path: ./dist/bw-${{ matrix.os }}-sha256-${env:PACKAGE_VERSION}.txt
+          name: bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
+          path: ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
 
   publish_nuget_github:
     name: Publish Nuget to GitHub
+    runs-os: windows-latest
     needs: [ package_nuget, version ]
     steps:
       - name: Cache Dist
