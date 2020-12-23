@@ -130,10 +130,9 @@ jobs:
             -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
 
-
   package-nuget:
     runs-on: windows-latest
-    needs: build
+    needs: package-zips
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
