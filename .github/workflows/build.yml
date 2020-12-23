@@ -109,9 +109,9 @@ jobs:
       - name: Package ${{ matrix.os }}
         run: |
           npm run publish:${{ matrix.npm-os }}
-          7z a ./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
-          checksum -f="./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip" `
-            -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
+          7z a ./dist/bw-${{ matrix.artifact-os }}-${{ env.PACKAGE_VERSION }}.zip ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
+          checksum -f="./dist/bw-${{ matrix.artifact-os }}-${{ env.PACKAGE_VERSION }}.zip" `
+            -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${{ env.PACKAGE_VERSION }}.txt
 
 
   package-nuget:
@@ -158,12 +158,6 @@ jobs:
           if($testVersion -ne $env:PACKAGE_VERSION) {
             Throw "Version test failed."
           }
-
-      - name: Cache Node Modules
-        uses: actions/cache@v2
-        with:
-          path: ./node-modules
-          key: node-modules-cache-${{ github.sha }}
 
   publish-zips-github:
     name: Publish zips to GitHub
