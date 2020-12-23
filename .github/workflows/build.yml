@@ -86,6 +86,14 @@ jobs:
       - name: Setup Windows builder
         run: choco install checksum --no-progress
 
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: Cache Build
         uses: actions/cache@v2
         with:
@@ -110,6 +118,14 @@ jobs:
     runs-on: windows-latest
     needs: build
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
       - name: Cache Dist
         uses: actions/cache@v2
         with:
@@ -148,6 +164,14 @@ jobs:
         artifact-os: ['windows', 'macos', 'linux']
     needs: version-test
     steps:
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: Cache Dist
         uses: actions/cache@v2
         with:
@@ -172,6 +196,9 @@ jobs:
     runs-on: windows-latest
     needs: [ package-nuget, version-test ]
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: Cache Dist
         uses: actions/cache@v2
         with:
@@ -196,6 +223,9 @@ jobs:
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
 
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: Publish
         run: |
           .\scripts\choco-update.ps1 -version $env:PACKAGE_VERSION
@@ -208,6 +238,11 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
       - name: Checkout repo
         uses: actions/checkout@v2
 
@@ -263,6 +298,11 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
       - name: Setup NPM
         shell: pwsh
         run: |
