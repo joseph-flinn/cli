@@ -173,7 +173,7 @@ jobs:
 
   publish_nuget_github:
     name: Publish Nuget to GitHub
-    runs-os: windows-latest
+    runs-on: windows-latest
     needs: [ package_nuget, version ]
     steps:
       - name: Cache Dist
