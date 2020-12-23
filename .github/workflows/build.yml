@@ -31,9 +31,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Setup Windows builder
-        run: choco install checksum --no-progress
-
       - name: Set up Node
         uses: actions/setup-node@v1
         with:
@@ -86,6 +83,9 @@ jobs:
     runs-on: windows-latest
     needs: build
     steps:
+      - name: Setup Windows builder
+        run: choco install checksum --no-progress
+
       - name: Cache Build
         uses: actions/cache@v2
         with:
@@ -107,7 +107,7 @@ jobs:
 
 
   package-nuget:
-    runs-on: window-latest
+    runs-on: windows-latest
     needs: build
     steps:
       - name: Cache Dist
