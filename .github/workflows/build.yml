@@ -54,13 +54,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./build
-          key: build-cache-${{ hashFiles('./build') }}
+          key: build-cache-${{ github.sha }}
 
       - name: Cache Node Modules
         uses: actions/cache@v2
         with:
           path: ./node-modules
-          key: node-modules-cache-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-cache-${{ github.sha }}
 
       - name: Install
         run: npm install
@@ -108,13 +108,19 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./node-modules
-          key: node-modules-cache-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-cache-${{ github.sha }}
 
       - name: Cache Build
         uses: actions/cache@v2
         with:
           path: ./build
-          key: build-cache-${{ hashFiles('./build') }}
+          key: build-cache-${{ github.sha }}
+
+      - name: Cache Dist
+        uses: actions/cache@v2
+        with:
+          path: ./dist
+          key: dist-cache-${{ github.sha }}
 
       - name: Package ${{ matrix.os }}
         run: |
@@ -123,11 +129,6 @@ jobs:
           checksum -f="./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip" `
             -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
-      - name: Cache Dist
-        uses: actions/cache@v2
-        with:
-          path: ./dist
-          key: dist-cache-${{ hashFiles('./dist') }}
 
 
   package-nuget:
@@ -146,7 +147,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./dist
-          key: dist-cache-${{ hashFiles('./dist') }}
+          key: dist-cache-${{ github.sha }}
+
+      - name: debug dist cache
+        run: dir ./dist
           
       - name: Package NuGet
         run: .\scripts\choco-pack.ps1
@@ -162,7 +166,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./dist
-          key: dist-cache-${{ hashFiles('./dist') }}
+          key: dist-cache-${{ github.sha }}
 
       - name: Version Test
         run: |
@@ -176,7 +180,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./node-modules
-          key: node-modules-cache-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-cache-${{ github.sha }}
 
   publish-zips-github:
     name: Publish zips to GitHub
@@ -198,7 +202,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./dist
-          key: dist-cache-${{ hashFiles('./dist') }}
+          key: dist-cache-${{ github.sha }}
 
       - name: Publish ${{ matrix.artifact-os }} zip
         uses: actions/upload-artifact@v2
@@ -225,7 +229,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./dist
-          key: dist-cache-${{ hashFiles('./dist') }}
+          key: dist-cache-${{ github.sha }}
 
       - name: Publish Chocolatey CLI
         uses: actions/upload-artifact@v2
@@ -336,7 +340,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./build
-          key: build-cache-${{ hashFiles('./build') }}
+          key: build-cache-${{ github.sha }}
 
       - name: Publish NPM
         run: npm publish --access public
