@@ -28,6 +28,9 @@ jobs:
     name: Setup Package Version
     runs-on: windows-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: Set PACKAGE_VERSION
         run: |
           $env:pkgVersion = (Get-Content -Raw -Path .\package.json | ConvertFrom-Json).version
