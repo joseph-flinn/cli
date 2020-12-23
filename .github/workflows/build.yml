@@ -81,12 +81,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - npm-os: win
+          - pkg-target: win-x64
             artifact-os: windows
-          - npm-os: mac
+            exe: bw.exe
+          - pkg-target: macos-x64
             artifact-os: macos
-          - npm-os: lin
+            exe: bw
+          - pkg-target: linux-x64
             artifact-os: linux
+            exe: bw
     runs-on: windows-latest
     needs: build
     steps:
@@ -115,8 +118,8 @@ jobs:
 
       - name: Package ${{ matrix.os }}
         run: |
-          npm run package:${{ matrix.npm-os }}
-          7z a ./dist/bw-${{ matrix.artifact-os }}-%PACKAGE_VERSION%.zip ./dist/${{ matrix.artifact-os }}/bw.exe
+          npx pkg . --targets ${{ matrix.pkg-target }} --output ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
+          7z a ./dist/bw-${{ matrix.artifact-os }}-%PACKAGE_VERSION%.zip ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
           checksum -f="./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip" `
             -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
