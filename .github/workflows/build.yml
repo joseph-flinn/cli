@@ -105,8 +105,8 @@ jobs:
 
       - name: Package ${{ matrix.os }}
         run: |
-          npx pkg . --targets ${{ matrix.pkg-target }} --output ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
-          7z a ./dist/bw-${{ matrix.artifact-os }}-%PACKAGE_VERSION%.zip ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
+          pkg . --targets ${{ matrix.pkg-target }} --output ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
+          7z a ./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
           checksum -f="./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip" `
             -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
 
