@@ -155,7 +155,7 @@ jobs:
         run: |
           Expand-Archive -Path "./dist/bw-windows-${{ env.PACKAGE_VERSION }}.zip" -DestinationPath "./test/windows"
           $testVersion = Invoke-Expression '& ./test/windows/bw.exe -v'
-          if($testVersion -ne ${{ env.PACKAGE_VERSION }}) {
+          if($testVersion -ne $env:PACKAGE_VERSION) {
             Throw "Version test failed."
           }
 
@@ -211,8 +211,8 @@ jobs:
       - name: Publish Chocolatey CLI
         uses: actions/upload-artifact@v2
         with: 
-          name: bitwarden-cli.${{ env.PACKAGE_VERSION }}.nupkg
-          path: ./dist/chocolatey/bitwarden-cli.${{ env.PACKAGE_VERSION }}.nupkg
+          name: bitwarden-cli.${env:PACKAGE_VERSION}.nupkg
+          path: ./dist/chocolatey/bitwarden-cli.${env:PACKAGE_VERSION}.nupkg
 
 
   publish-windows:
