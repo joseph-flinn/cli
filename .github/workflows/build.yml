@@ -55,12 +55,15 @@ jobs:
           - pkg-target: win-x64
             artifact-os: windows
             exe: bw.exe
+            npm-os: win
           - pkg-target: macos-x64
             artifact-os: macos
             exe: bw
+            npm-os: mac
           - pkg-target: linux-x64
             artifact-os: linux
             exe: bw
+            npm-os: lin
     steps:
       - name: Setup Windows builder
         run: choco install checksum --no-progress
@@ -105,7 +108,7 @@ jobs:
 
       - name: Package ${{ matrix.os }}
         run: |
-          pkg . --targets ${{ matrix.pkg-target }} --output ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
+          npm run publish:${{ matrix.npm-os }}
           7z a ./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip ./dist/${{ matrix.artifact-os }}/${{ matrix.exe }}
           checksum -f="./dist/bw-${{ matrix.artifact-os }}-${env:PACKAGE_VERSION}.zip" `
             -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.artifact-os }}-sha256-${env:PACKAGE_VERSION}.txt
