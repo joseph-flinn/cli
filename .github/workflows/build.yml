@@ -153,8 +153,8 @@ jobs:
 
       - name: Version Test
         run: |
-          dir './test/windows'
           Expand-Archive -Path "./dist/bw-windows-${{ env.PACKAGE_VERSION }}.zip" -DestinationPath "./test/windows"
+          dir './test/windows'
           $testVersion = Invoke-Expression '& .\test\windows\bw.exe -v'
           if($testVersion -ne $env:PACKAGE_VERSION) {
             Throw "Version test failed."
