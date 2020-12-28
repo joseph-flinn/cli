@@ -92,7 +92,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./dist
-          key: dist-cache-${{ github.sha }}
+          key: ${{ runner.os }}-dist-cache-${{ github.sha }}
 
       - name: Install
         run: npm install
@@ -153,8 +153,9 @@ jobs:
 
       - name: Version Test
         run: |
+          dir './test/windows'
           Expand-Archive -Path "./dist/bw-windows-${{ env.PACKAGE_VERSION }}.zip" -DestinationPath "./test/windows"
-          $testVersion = Invoke-Expression '& ./test/windows/bw.exe -v'
+          $testVersion = Invoke-Expression '& .\test\windows\bw.exe -v'
           if($testVersion -ne $env:PACKAGE_VERSION) {
             Throw "Version test failed."
           }
