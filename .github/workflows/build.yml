@@ -33,6 +33,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
+      - name: Cache workspace
+        id: cached-dist
+        uses: actions/cache@v2
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ hashFiles('./') }}
+
       - name: Setup Windows builder
         run: choco install checksum --no-progress
 
@@ -81,23 +88,41 @@ jobs:
       - name: Clean Build
         run: npm run clean
 
-      - name: Package Windows
-        run: npm run package:win
 
-      - name: Package Mac
-        run: npm run package:mac
+  package_and_publish:
+    name: Package & Publish OS Executables
+    runs-on: windows-latest
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - os: windows
+            npm_os: win
+            script: bw.exe
+          - os: macos
+            npm_os: mac
+            script: bw
+          - os: linux
+            npm_os: lin
+            script: bw
+    steps:
+      - name: Cache workspace
+        id: cached-dist
+        uses: actions/cache@v2
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ hashFiles('./') }}
 
-      - name: Package Linux
-        run: npm run package:lin
+      - name: Package ${{ matrix.os }}
+        run: npm run package:${{ matrix.npm_os }}
 
       - name: Zip
         shell: cmd
         run: |
-          7z a ./dist/bw-windows-%PACKAGE_VERSION%.zip ./dist/windows/bw.exe
-          7z a ./dist/bw-macos-%PACKAGE_VERSION%.zip ./dist/macos/bw
-          7z a ./dist/bw-linux-%PACKAGE_VERSION%.zip ./dist/linux/bw
+          7z a ./dist/bw-${{ matrix.os }}-%PACKAGE_VERSION%.zip ./dist/${{ matrix.os }}/${{ matrix.script }}
 
       - name: Version Test
+        if: ${{ matrix.os }} == "windows"
         run: |
           dir ./dist/
           Expand-Archive -Path "./dist/bw-windows-${env:PACKAGE_VERSION}.zip" -DestinationPath "./test/windows"
@@ -111,70 +136,50 @@ jobs:
 
       - name: Package & Create checksums
         run: |
-          .\scripts\choco-pack.ps1
+          checksum -f="./dist/bw-${{ matrix.os }}-${env:PACKAGE_VERSION}.zip" `
+            -t sha256 | Out-File -Encoding ASCII ./dist/bw-${{ matrix.os }}-sha256-${env:PACKAGE_VERSION}.txt
 
-          checksum -f="./dist/bw-windows-${env:PACKAGE_VERSION}.zip" `
-            -t sha256 | Out-File -Encoding ASCII ./dist/bw-windows-sha256-${env:PACKAGE_VERSION}.txt
-          checksum -f="./dist/bw-macos-${env:PACKAGE_VERSION}.zip" `
-            -t sha256 | Out-File -Encoding ASCII ./dist/bw-macos-sha256-${env:PACKAGE_VERSION}.txt
-          checksum -f="./dist/bw-linux-${env:PACKAGE_VERSION}.zip" `
-            -t sha256 | Out-File -Encoding ASCII ./dist/bw-linux-sha256-${env:PACKAGE_VERSION}.txt
-
-      - name: Publish windows zip to GitHub
+      - name: Publish ${{ matrix.os }} zip to GitHub
         uses: actions/upload-artifact@v2
         with:
-          name: bw-windows-${{ env.PACKAGE_VERSION }}.zip
-          path: ./dist/bw-windows-${{ env.PACKAGE_VERSION }}.zip
+          name: bw-${{ matrix.os }}-${{ env.PACKAGE_VERSION }}.zip
+          path: ./dist/bw-${{ matrix.os }}-${{ env.PACKAGE_VERSION }}.zip
 
-      - name: Publish windows checksum to GitHub
+      - name: Publish ${{ matrix.os}} checksum to GitHub
         uses: actions/upload-artifact@v2
         with:
-          name: bw-windows-sha256-${{ env.PACKAGE_VERSION }}.txt
-          path: ./dist/bw-windows-sha256-${{ env.PACKAGE_VERSION }}.txt
-
-      - name: Publish macos zip to GitHub
-        uses: actions/upload-artifact@v2
-        with:
-          name: bw-macos-${{ env.PACKAGE_VERSION }}.zip
-          path: ./dist/bw-macos-${{ env.PACKAGE_VERSION }}.zip
-
-      - name: Publish macos checksum to GitHub
-        uses: actions/upload-artifact@v2
-        with:
-          name: bw-macos-sha256-${{ env.PACKAGE_VERSION }}.txt
-          path: ./dist/bw-macos-sha256-${{ env.PACKAGE_VERSION }}.txt
-
-      - name: Publish linux zip to GitHub
-        uses: actions/upload-artifact@v2
-        with:
-          name: bw-linux-${{ env.PACKAGE_VERSION }}.zip
-          path: ./dist/bw-linux-${{ env.PACKAGE_VERSION }}.zip
-
-      - name: Publish linux checksum to GitHub
-        uses: actions/upload-artifact@v2
-        with:
-          name: bw-linux-sha256-${{ env.PACKAGE_VERSION }}.txt
-          path: ./dist/bw-linux-sha256-${{ env.PACKAGE_VERSION }}.txt
-
-      - name: Publish Chocolatey CLI
-        uses: actions/upload-artifact@v2
-        with: 
-          name: bitwarden-cli.${{ env.PACKAGE_VERSION }}.nupkg
-          path: ./dist/chocolatey/bitwarden-cli.${{ env.PACKAGE_VERSION }}.nupkg
+          name: bw-${{ matrix.os }}-sha256-${{ env.PACKAGE_VERSION }}.txt
+          path: ./dist/bw-${{ matrix.os}}-sha256-${{ env.PACKAGE_VERSION }}.txt
 
 
-  publish_windows:
-    name: Publish Windows
+  publish_and_publish_choco:
+    name: Package & Publish Choco
     runs-on: windows-latest
     needs: build
     if: github.event_name == 'release'
     steps:
+      - name: Cache workspace
+        id: cached-dist
+        uses: actions/cache@v2
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ hashFiles('./') }}
+          
       - name: Setup Chocolatey
         run: choco apikey --key $env:CHOCO_API_KEY --source https://push.chocolatey.org/
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
 
-      - name: Publish
+      - name: Package Chocolatey
+        run: .\scripts\choco-pack.ps1
+
+      - name: Publish Chocolatey CLI to GitHub
+        uses: actions/upload-artifact@v2
+        with: 
+          name: bitwarden-cli.${{ env.PACKAGE_VERSION }}.nupkg
+          path: ./dist/chocolatey/bitwarden-cli.${{ env.PACKAGE_VERSION }}.nupkg
+
+      - name: Publish to Chocolately 
         run: |
           .\scripts\choco-update.ps1 -version $env:PACKAGE_VERSION
 
@@ -186,8 +191,12 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: Cache dist/windows
+        id: cached-dist
+        uses: actions/cache@v2
+        with:
+          path: dist/windows
+          key: ${{ runner.os }}-${{ hashFiles('dist/windows/') }}
 
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@v1
@@ -241,6 +250,13 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
+      - name: Cache dist/windows
+        id: cached-dist
+        uses: actions/cache@v2
+        with:
+          path: dist/windows
+          key: ${{ runner.os }}-${{ hashFiles('dist/windows/') }}
+
       - name: Setup NPM
         shell: pwsh
         run: |
