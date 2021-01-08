@@ -173,13 +173,15 @@ jobs:
     needs: package_and_publish
     if: github.event_name == 'release'
     steps:
-      - name: Cache workspace
+      - name: Cache install/build
         id: cached-dist
         uses: actions/cache@v2
         with:
-          path: ./
-          key: ${{ runner.os }}-${{ hashFiles('./') }}
-          
+          path: |
+            ./build
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('package-lockfile.json') }}
+
       - name: Setup Chocolatey
         run: choco apikey --key $env:CHOCO_API_KEY --source https://push.chocolatey.org/
         env:
