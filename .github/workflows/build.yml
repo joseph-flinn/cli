@@ -191,12 +191,12 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
-      - name: Cache dist/windows
+      - name: Cache workspace
         id: cached-dist
         uses: actions/cache@v2
         with:
-          path: dist/windows
-          key: ${{ runner.os }}-${{ hashFiles('dist/windows/') }}
+          path: ./
+          key: ${{ runner.os }}-${{ hashFiles('./') }}
 
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@v1
@@ -250,12 +250,12 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     steps:
-      - name: Cache dist/windows
+      - name: Cache workspace
         id: cached-dist
         uses: actions/cache@v2
         with:
-          path: dist/windows
-          key: ${{ runner.os }}-${{ hashFiles('dist/windows/') }}
+          path: ./
+          key: ${{ runner.os }}-${{ hashFiles('./') }}
 
       - name: Setup NPM
         shell: pwsh
