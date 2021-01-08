@@ -33,14 +33,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Cache install/build
-        id: cached-dist
+      - name: Cache build
+        id: cached-build
         uses: actions/cache@v2
         with:
           path: |
             ./build
-            **/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('package-lockfile.json') }}
+          key: ${{ runner.os }}-${{ hashFiles('./build') }}
 
       - name: Setup Windows builder
         run: choco install checksum --no-progress
@@ -85,9 +84,6 @@ jobs:
       - name: Build
         run: npm run build:prod
 
-      - name: Clean Build
-        run: npm run clean
-
 
   package_and_publish:
     name: Package & Publish OS Executables
@@ -109,22 +105,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Cache install/build
-        id: cached-dist
+      - name: Cache build
+        id: cached-build
         uses: actions/cache@v2
         with:
           path: |
             ./build
-            **/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('package-lockfile.json') }}
+          key: ${{ runner.os }}-${{ hashFiles('./build') }}
 
       - name: Debugging Cache
-        run: dir
-
-      - name: Debugging Cache 2
         run: |
+          dir
           dir build
-          dir node_modules
 
       - name: Package ${{ matrix.os }}
         run: npm run package:${{ matrix.npm_os }}
@@ -173,14 +165,16 @@ jobs:
     needs: package_and_publish
     if: github.event_name == 'release'
     steps:
-      - name: Cache install/build
-        id: cached-dist
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Cache build
+        id: cached-build
         uses: actions/cache@v2
         with:
           path: |
             ./build
-            **/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('package-lockfile.json') }}
+          key: ${{ runner.os }}-${{ hashFiles('./build') }}
 
       - name: Setup Chocolatey
         run: choco apikey --key $env:CHOCO_API_KEY --source https://push.chocolatey.org/
@@ -210,12 +204,16 @@ jobs:
     needs: package_and_publish
     if: github.event_name == 'release'
     steps:
-      - name: Cache workspace
-        id: cached-dist
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Cache build
+        id: cached-build
         uses: actions/cache@v2
         with:
-          path: ./
-          key: ${{ runner.os }}-${{ hashFiles('./') }}
+          path: |
+            ./build
+          key: ${{ runner.os }}-${{ hashFiles('./build') }}
 
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@v1
@@ -269,12 +267,16 @@ jobs:
     needs: package_and_publish
     if: github.event_name == 'release'
     steps:
-      - name: Cache workspace
-        id: cached-dist
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Cache build
+        id: cached-build
         uses: actions/cache@v2
         with:
-          path: ./
-          key: ${{ runner.os }}-${{ hashFiles('./') }}
+          path: |
+            ./build
+          key: ${{ runner.os }}-${{ hashFiles('./build') }}
 
       - name: Setup NPM
         shell: pwsh
