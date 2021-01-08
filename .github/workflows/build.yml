@@ -48,6 +48,13 @@ jobs:
         with:
           node-version: '10.x'
 
+	  - name: Download & Install RH
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri http://www.angusj.com/resourcehacker/resource_hacker.zip -OutFile "resource_hacker.zip"
+          Expand-Archive -Path resource_hacker.zip -DestinationPath scripts/resource_hacker
+          echo "D:\a\cli\cli\scripts\resource_hacker" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append      
+
       - name: Set PACKAGE_VERSION & VER_INFO
         run: |
           $env:pkgVersion = (Get-Content -Raw -Path .\package.json | ConvertFrom-Json).version
@@ -60,15 +67,8 @@ jobs:
         env:
           WIN_PKG: C:\Users\appveyor\.pkg-cache\v2.5\fetched-v10.4.1-win-x64
 
-      - name: test setting env var
-        run: |
-          echo "version: $env:PACKAGE_VERSION"
-          
-          if($env:PACKAGE_VERSION -eq "") {
-            Throw "test env failed."
-          }
-
       - name: ResourceHacker
+        shell: cmd
         run: |
           if defined VER_INFO ResourceHacker -open %WIN_PKG% -save %WIN_PKG% -action delete -mask ICONGROUP,1,
           if defined VER_INFO ResourceHacker -open version-info.rc -save version-info.res -action compile
@@ -150,10 +150,10 @@ jobs:
           path: ./dist/bw-${{ matrix.os}}-sha256-${{ env.PACKAGE_VERSION }}.txt
 
 
-  publish_and_publish_choco:
+  pnp_choco:
     name: Package & Publish Choco
     runs-on: windows-latest
-    needs: build
+    needs: package_and_publish
     if: github.event_name == 'release'
     steps:
       - name: Cache workspace
@@ -183,10 +183,10 @@ jobs:
 
 
   # This process seems independent from the others
-  publish_snap:
+  pnp_snap:
     name: Publish Snap
     runs-on: ubuntu-latest
-    needs: build
+    needs: package_and_publish
     if: github.event_name == 'release'
     steps:
       - name: Cache workspace
@@ -242,10 +242,10 @@ jobs:
 
 
   # This job is independent: it reruns 'npm run build:prod'
-  publish_npm:
+  pnp_npm:
     name: Publish NPM
     runs-on: ubuntu-latest
-    needs: build
+    needs: package_and_publish
     if: github.event_name == 'release'
     steps:
       - name: Cache workspace
