@@ -33,12 +33,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Cache workspace
+      - name: Cache install/build
         id: cached-dist
         uses: actions/cache@v2
         with:
-          path: ./
-          key: ${{ runner.os }}-${{ hashFiles('./') }}
+          path: |
+            ./build
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('package-lockfile.json') }}
 
       - name: Setup Windows builder
         run: choco install checksum --no-progress
@@ -104,12 +106,25 @@ jobs:
             npm_os: lin
             script: bw
     steps:
-      - name: Cache workspace
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Cache install/build
         id: cached-dist
         uses: actions/cache@v2
         with:
-          path: ./
-          key: ${{ runner.os }}-${{ hashFiles('./') }}
+          path: |
+            ./build
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('package-lockfile.json') }}
+
+      - name: Debugging Cache
+        run: dir
+
+      - name: Debugging Cache 2
+        run: |
+          dir build
+          dir node_modules
 
       - name: Package ${{ matrix.os }}
         run: npm run package:${{ matrix.npm_os }}
