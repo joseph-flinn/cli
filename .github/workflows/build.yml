@@ -165,6 +165,8 @@ jobs:
           path: ./dist/bw-${{ matrix.os}}-sha256-${{ env.PACKAGE_VERSION }}.txt
 
 
+  # If this only depends on things that have been uploaded, then this can be separate. 
+  # Requires reverse engineering the choco scripts
   pnp_choco:
     name: Package & Publish Choco
     runs-on: windows-latest
@@ -197,7 +199,9 @@ jobs:
           .\scripts\choco-update.ps1 -version $env:PACKAGE_VERSION
 
 
-  # This process seems independent from the others
+  # This process depends on the builds. However, if it is only dependent on the 
+  # build artifacts, then this can be kept here separately. If not, idk yet how
+  # to combine windows + ubuntu worker file systems
   pnp_snap:
     name: Publish Snap
     runs-on: ubuntu-latest
